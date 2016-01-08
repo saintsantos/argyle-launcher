@@ -57,7 +57,7 @@ public class MainActivity extends AppCompatActivity {
         request.setVisibleInDownloadsUi(true);
         DownloadManager manager = (DownloadManager) getSystemService(Context.DOWNLOAD_SERVICE);
         myDownloadReference = manager.enqueue(request);
-        //install();
+        install();
     }
 
     public void install() {
