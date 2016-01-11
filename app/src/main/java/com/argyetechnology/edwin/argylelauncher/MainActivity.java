@@ -2,6 +2,7 @@ package com.argyetechnology.edwin.argylelauncher;
 
 import android.app.DownloadManager;
 import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.database.Cursor;
