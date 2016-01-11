@@ -2,7 +2,6 @@ package com.argyetechnology.edwin.argylelauncher;
 
 import android.app.DownloadManager;
 import android.content.BroadcastReceiver;
-import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.database.Cursor;
@@ -30,7 +29,6 @@ public class MainActivity extends AppCompatActivity {
     private Button launchBtn;
     private Button updateBtn;
     private Button installBtn;
-    private Context context;
     private DownloadManager manager;
     private String downloadCompleteIntentName = DownloadManager.ACTION_DOWNLOAD_COMPLETE;
     private IntentFilter downloadCompleteIntentFilter = new IntentFilter(downloadCompleteIntentName);
