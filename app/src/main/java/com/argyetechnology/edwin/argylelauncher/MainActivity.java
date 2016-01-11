@@ -2,31 +2,24 @@ package com.argyetechnology.edwin.argylelauncher;
 
 import android.app.DownloadManager;
 import android.content.BroadcastReceiver;
-import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.database.Cursor;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.Environment;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
-import android.widget.ImageView;
-import android.widget.Toast;
 
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -41,9 +34,6 @@ public class MainActivity extends AppCompatActivity {
     private DownloadManager manager;
     private String downloadCompleteIntentName = DownloadManager.ACTION_DOWNLOAD_COMPLETE;
     private IntentFilter downloadCompleteIntentFilter = new IntentFilter(downloadCompleteIntentName);
-    //private String link = "https://www.mozilla.org/en-US/firefox/new/#download-fx";
-    //private String link = "https://www.dropbox.com/s/bqzzhtjl78v5yio/quicklaunch.apk?dl=1";
-    //private String link = "https://www.dropbox.com/s/c46o77mxrk261km/data-structures-and-algorithms-in-c.pdf?dl=1";
     private String link = "https://www.dropbox.com/s/5tsbcvjyy2ozpfi/app.zip?dl=1";
     private long myDownloadReference;
 
