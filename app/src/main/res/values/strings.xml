@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">Argyle Launcher</string>
+    <string name="title_activity_webview">webviewActivity</string>
 </resources>

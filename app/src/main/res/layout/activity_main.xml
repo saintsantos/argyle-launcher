@@ -19,9 +19,18 @@
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Check for update and Install"
-        android:id="@+id/updateButton"
+        android:text="Install update"
+        android:id="@+id/manUpdate"
         android:layout_centerHorizontal="true"
         android:layout_above="@id/Launch" />
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Download update"
+        android:id="@+id/updateButton"
+        android:layout_centerHorizontal="true"
+        android:layout_above="@id/manUpdate" />
+
 
 </RelativeLayout>
