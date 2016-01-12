@@ -11,26 +11,11 @@
 
     <Button
         android:id="@+id/Launch"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_centerInParent="true"
+        android:layout_width="200dp"
+        android:layout_height="100dp"
+        android:layout_centerHorizontal="true"
+        android:layout_alignParentBottom="true"
         android:text="Launch REDAR"/>
-
-    <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Install update"
-        android:id="@+id/manUpdate"
-        android:layout_centerHorizontal="true"
-        android:layout_above="@id/Launch" />
-
-    <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Download update"
-        android:id="@+id/updateButton"
-        android:layout_centerHorizontal="true"
-        android:layout_above="@id/manUpdate" />
 
 
 </RelativeLayout>

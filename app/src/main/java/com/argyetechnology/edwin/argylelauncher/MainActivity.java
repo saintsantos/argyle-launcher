@@ -11,6 +11,9 @@ import android.os.Environment;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 
@@ -35,12 +38,9 @@ public class MainActivity extends AppCompatActivity {
 
     //The buttons to handle the actions in the platform
     private Button launchBtn;
-    private Button updateBtn;
-    private Button installBtn;
 
-    @Override
+
     protected void onCreate(Bundle savedInstanceState) {
-        //TODO: Move the update button to a menu option instead of simply a button
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         //Makes the app fullscreen
@@ -60,12 +60,6 @@ public class MainActivity extends AppCompatActivity {
                     DownloadManager.Query query = new DownloadManager.Query();
                     query.setFilterById(myDownloadReference);
                     Cursor c = manager.query(query);
-
-                    if (downloadId != downloadId) {
-                        Log.v(TAG, "Ignoring unrelated download" + downloadId);
-                        return;
-
-                    }
 
                     if (!c.moveToFirst()) {
                         Log.e(TAG, "Empty Row");
@@ -87,14 +81,6 @@ public class MainActivity extends AppCompatActivity {
         };
         registerReceiver(downloadCompleteReceiver, downloadCompleteIntentFilter);
 
-        installBtn = (Button) findViewById(R.id.manUpdate);
-        installBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                install();
-            }
-        });
-
         launchBtn = (Button) findViewById(R.id.Launch);
         launchBtn.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -102,32 +88,51 @@ public class MainActivity extends AppCompatActivity {
                 launch(v);
             }
         });
+    }
 
-        updateBtn = (Button) findViewById(R.id.updateButton);
-        updateBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.menu, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch(item.getItemId()) {
+            case R.id.update:
+                Log.d(TAG, "The check for updates was selected");
                 download();
-            }
-        });
+                return true;
+
+            default:
+                return super.onOptionsItemSelected(item);
+        }
     }
 
     public void launch(View view) {
-        //TODO: Make the launch button larger
         Log.d(TAG, "Launching package");
         Intent launchIntent = getPackageManager().getLaunchIntentForPackage(APP_PACKAGE);
         startActivity(launchIntent);
     }
 
     public void download() {
-        //TODO: Add check for the existence of the downloaded files before simply deleting them.
         //Deletes files from the Download directory before downloading the updates
-        String root = Environment.getExternalStorageDirectory().toString();
-        File file1 = new File(root + "/Download/app.zip");
-        File file2 = new File(root + "/Download/quicklaunch.apk");
-        Log.d(TAG, "Deleting files");
-        file1.delete();
-        file2.delete();
+        File file1 = new File(Environment.getExternalStorageDirectory() + "/Download/app.zip");
+        File file2 = new File(Environment.getExternalStorageDirectory() + "/Download/quicklaunch.apk");
+        if(file1.exists()) {
+            Log.d(TAG, "Zip file found, deleting... ");
+            file1.delete();
+        } else {
+            Log.d(TAG, "Zip file not found, skipping... ");
+        }
+
+        if(file2.exists()) {
+            Log.d(TAG, "Apk found, deleting... ");
+            file2.delete();
+        } else {
+            Log.d(TAG, "Apk not found, skipping... ");
+        }
 
         //Perform the required downloads for the update
         DownloadManager.Request request = new DownloadManager.Request(Uri.parse(link));
