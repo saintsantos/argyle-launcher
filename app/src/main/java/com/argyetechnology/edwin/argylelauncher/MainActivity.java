@@ -8,30 +8,33 @@ import android.content.IntentFilter;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Environment;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
+import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
-
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.UUID;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
+import com.pushlink.android.PushLink;
+
 
 public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = "Argyle Launcher";
     private static final String APP_PACKAGE = "com.argyletechnologygroup.REDAR";
     private DownloadManager manager;
-    private String link = "https://www.dropbox.com/s/5tsbcvjyy2ozpfi/app.zip?dl=1";
+    private String link = "https://www.dropbox.com/s/q7c4bwmiew3cxz1/app.zip?dl=1";
     private long myDownloadReference;
     private String downloadCompleteIntentName = DownloadManager.ACTION_DOWNLOAD_COMPLETE;
     private IntentFilter downloadCompleteIntentFilter = new IntentFilter(downloadCompleteIntentName);
@@ -39,6 +42,17 @@ public class MainActivity extends AppCompatActivity {
     //The buttons to handle the actions in the platform
     private Button launchBtn;
 
+    //Locations and app name
+    private String ziploc = Environment.getExternalStorageDirectory() + "/Download/app.zip";
+    private String apploc = Environment.getExternalStorageDirectory() + "/Download/REDAR.apk";
+    private String appname = "REDAR.apk";
+
+    //Find device ID
+
+    private String deviceId;
+    private String apiKey;
+
+    private String tmDevice, tmSerial, androidId;
 
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -47,6 +61,20 @@ public class MainActivity extends AppCompatActivity {
         View decorView = getWindow().getDecorView();
         int  uiOptions = View.SYSTEM_UI_FLAG_FULLSCREEN;
         decorView.setSystemUiVisibility(uiOptions);
+
+        //Get Device ID
+        final TelephonyManager tm = (TelephonyManager) getApplicationContext().getSystemService(Context.TELEPHONY_SERVICE);
+        tmDevice = "" + tm.getDeviceId();
+        tmSerial = "" + tm.getSimSerialNumber();
+        androidId = "" + android.provider.Settings.Secure.getString(getContentResolver(), android.provider.Settings.Secure.ANDROID_ID);
+
+        UUID deviceUuid = new UUID(androidId.hashCode(), ((long)tmDevice.hashCode() << 32) | tmSerial.hashCode());
+        deviceId = deviceUuid.toString();
+        apiKey = "m6fssu76evdne08a";
+
+        //PushLink.start(this, R.drawable.ic_launcher_hdpi, apiKey, deviceId);
+
+
 
          BroadcastReceiver downloadCompleteReceiver = new BroadcastReceiver() {
             @Override
@@ -100,8 +128,13 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch(item.getItemId()) {
-            case R.id.update:
-                Log.d(TAG, "The check for updates was selected");
+            case R.id.updateLauncher:
+                Log.d(TAG, "The service to update the launcher was started");
+                PushLink.start(this, R.drawable.ic_launcher_hdpi, apiKey, deviceId);
+                return true;
+
+            case R.id.updateRedar:
+                Log.d(TAG, "The service to update REDAR was started");
                 download();
                 return true;
 
@@ -118,8 +151,8 @@ public class MainActivity extends AppCompatActivity {
 
     public void download() {
         //Deletes files from the Download directory before downloading the updates
-        File file1 = new File(Environment.getExternalStorageDirectory() + "/Download/app.zip");
-        File file2 = new File(Environment.getExternalStorageDirectory() + "/Download/quicklaunch.apk");
+        File file1 = new File(ziploc);
+        File file2 = new File(apploc);
         if(file1.exists()) {
             Log.d(TAG, "Zip file found, deleting... ");
             file1.delete();
@@ -149,7 +182,7 @@ public class MainActivity extends AppCompatActivity {
         Log.d(TAG, "Install application");
         unpackZip("/sdcard/Download/", "app.zip");
         Intent promptInstall = new Intent(Intent.ACTION_VIEW);
-        promptInstall.setDataAndType(Uri.fromFile(new File(Environment.getExternalStorageDirectory() + "/Download/" + "quicklaunch.apk")), "application/vnd.android.package-archive");
+        promptInstall.setDataAndType(Uri.fromFile(new File(Environment.getExternalStorageDirectory() + "/Download/" + appname)), "application/vnd.android.package-archive");
         promptInstall.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         startActivity(promptInstall);
     }
