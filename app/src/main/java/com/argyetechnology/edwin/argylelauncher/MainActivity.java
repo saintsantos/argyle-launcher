@@ -18,6 +18,8 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
+import android.widget.Toast;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.List;
@@ -51,7 +53,7 @@ public class MainActivity extends AppCompatActivity {
         View decorView = getWindow().getDecorView();
         int  uiOptions = View.SYSTEM_UI_FLAG_FULLSCREEN;
         decorView.setSystemUiVisibility(uiOptions);
-        launch();
+        //launch();
 
 
 
@@ -85,6 +87,7 @@ public class MainActivity extends AppCompatActivity {
                     File appFile = new File(apploc);
 
                     if(appFile.exists()) {
+                        Log.d(TAG, "Install the app");
                         install(appname);
                     } else {
 
@@ -92,10 +95,15 @@ public class MainActivity extends AppCompatActivity {
 
                             float currentVersion = getApplicationVersion();
                             float updateVersion = scan();
+                            Log.d(TAG, "Current Version: " + currentVersion);
+                            Log.d(TAG, "Update Verison: " + updateVersion);
 
                             if(currentVersion >= updateVersion) {
                                 Log.d(TAG, "The app is already at the latest version");
+                                Toast.makeText(getApplicationContext(), "Application already at latest version", Toast.LENGTH_SHORT).show();
                             } else {
+                                Log.d(TAG, "Download the apk installer");
+                                Toast.makeText(getApplicationContext(), "New update, please wait for download to finish", Toast.LENGTH_SHORT).show();
                                 download("http://liveupdates.argyletechnologygroup.com/redinc/REDAR.apk", "REDAR.apk");
                             }
 
@@ -105,7 +113,7 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         };
-        
+
         registerReceiver(downloadCompleteReceiver, downloadCompleteIntentFilter);
 
         launchBtn = (Button) findViewById(R.id.Launch);
@@ -131,7 +139,7 @@ public class MainActivity extends AppCompatActivity {
             case R.id.updateRedar:
                 Log.d(TAG, "The service to update REDAR was started");
                 delete(apploc, updtloc);
-                download("Insert link to txt file here", "version.txt");
+                download("https://www.dropbox.com/s/aaawhck7jgkrm7q/version.txt?dl=1", "version.txt");
                 return true;
 
             default:
@@ -200,7 +208,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public float scan() {
-        File scanFile = new File("/sdcard/Download", "test.txt");
+        File scanFile = new File("/sdcard/Download", "version.txt");
         try {
             Scanner fileScanner = new Scanner(scanFile);
             float i = fileScanner.nextFloat();
@@ -209,6 +217,11 @@ public class MainActivity extends AppCompatActivity {
             e.printStackTrace();
         }
         return 0;
+    }
+
+    protected void onPause() {
+        super.onPause();
+        unregisterReceiver(downloadCompleteReceiver);
     }
 
     protected void onDestroy() {
