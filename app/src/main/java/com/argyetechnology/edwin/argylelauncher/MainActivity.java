@@ -85,6 +85,7 @@ public class MainActivity extends AppCompatActivity {
                     Log.d(TAG, "Download Complete!");
                     File versionFile = new File(updtloc);
                     File appFile = new File(apploc);
+                    float currentVersion = getApplicationVersion();
 
                     if(appFile.exists()) {
                         Log.d(TAG, "Install the app");
@@ -93,7 +94,7 @@ public class MainActivity extends AppCompatActivity {
 
                         if(versionFile.exists()) {
 
-                            float currentVersion = getApplicationVersion();
+                            //float currentVersion = getApplicationVersion();
                             float updateVersion = scan();
                             Log.d(TAG, "Current Version: " + currentVersion);
                             Log.d(TAG, "Update Verison: " + updateVersion);
@@ -102,7 +103,7 @@ public class MainActivity extends AppCompatActivity {
                                 Log.d(TAG, "The app is already at the latest version");
                                 Toast.makeText(getApplicationContext(), "Application already at latest version", Toast.LENGTH_SHORT).show();
                             } else {
-                                Log.d(TAG, "Download the apk installer");
+                                Log.d(TAG, "Downloading the apk installer");
                                 Toast.makeText(getApplicationContext(), "New update, please wait for download to finish", Toast.LENGTH_SHORT).show();
                                 download("http://liveupdates.argyletechnologygroup.com/redinc/REDAR.apk", "REDAR.apk");
                             }
@@ -219,10 +220,6 @@ public class MainActivity extends AppCompatActivity {
         return 0;
     }
 
-    protected void onPause() {
-        super.onPause();
-        unregisterReceiver(downloadCompleteReceiver);
-    }
 
     protected void onDestroy() {
         super.onDestroy();
