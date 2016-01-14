@@ -5,28 +5,23 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.PackageInfo;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Environment;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
-import android.telephony.TelephonyManager;
+
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
-import java.io.BufferedInputStream;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.UUID;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
-import com.pushlink.android.PushLink;
+import java.io.FileNotFoundException;
+import java.util.List;
+import java.util.Scanner;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -34,7 +29,6 @@ public class MainActivity extends AppCompatActivity {
     private static final String TAG = "Argyle Launcher";
     private static final String APP_PACKAGE = "com.argyletechnologygroup.REDAR";
     private DownloadManager manager;
-    private String link = "https://www.dropbox.com/s/q7c4bwmiew3cxz1/app.zip?dl=1";
     private long myDownloadReference;
     private String downloadCompleteIntentName = DownloadManager.ACTION_DOWNLOAD_COMPLETE;
     private IntentFilter downloadCompleteIntentFilter = new IntentFilter(downloadCompleteIntentName);
@@ -43,16 +37,12 @@ public class MainActivity extends AppCompatActivity {
     private Button launchBtn;
 
     //Locations and app name
-    private String ziploc = Environment.getExternalStorageDirectory() + "/Download/app.zip";
+    private String updtloc = Environment.getExternalStorageDirectory() + "/Download/version.txt";
     private String apploc = Environment.getExternalStorageDirectory() + "/Download/REDAR.apk";
+
     private String appname = "REDAR.apk";
 
-    //Find device ID
-
-    private String deviceId;
-    private String apiKey;
-
-    private String tmDevice, tmSerial, androidId;
+    private BroadcastReceiver downloadCompleteReceiver;
 
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -61,22 +51,12 @@ public class MainActivity extends AppCompatActivity {
         View decorView = getWindow().getDecorView();
         int  uiOptions = View.SYSTEM_UI_FLAG_FULLSCREEN;
         decorView.setSystemUiVisibility(uiOptions);
-
-        //Get Device ID
-        final TelephonyManager tm = (TelephonyManager) getApplicationContext().getSystemService(Context.TELEPHONY_SERVICE);
-        tmDevice = "" + tm.getDeviceId();
-        tmSerial = "" + tm.getSimSerialNumber();
-        androidId = "" + android.provider.Settings.Secure.getString(getContentResolver(), android.provider.Settings.Secure.ANDROID_ID);
-
-        UUID deviceUuid = new UUID(androidId.hashCode(), ((long)tmDevice.hashCode() << 32) | tmSerial.hashCode());
-        deviceId = deviceUuid.toString();
-        apiKey = "m6fssu76evdne08a";
-
-        //PushLink.start(this, R.drawable.ic_launcher_hdpi, apiKey, deviceId);
+        launch();
 
 
 
-         BroadcastReceiver downloadCompleteReceiver = new BroadcastReceiver() {
+        //The receiver to signal when the download of the file is complete
+         downloadCompleteReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
 
@@ -84,7 +64,6 @@ public class MainActivity extends AppCompatActivity {
 
                 if (DownloadManager.ACTION_DOWNLOAD_COMPLETE.equals(action)) {
 
-                    long downloadId = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, 0);
                     DownloadManager.Query query = new DownloadManager.Query();
                     query.setFilterById(myDownloadReference);
                     Cursor c = manager.query(query);
@@ -102,18 +81,38 @@ public class MainActivity extends AppCompatActivity {
                     }
 
                     Log.d(TAG, "Download Complete!");
-                    install();
+                    File versionFile = new File(updtloc);
+                    File appFile = new File(apploc);
 
+                    if(appFile.exists()) {
+                        install(appname);
+                    } else {
+
+                        if(versionFile.exists()) {
+
+                            float currentVersion = getApplicationVersion();
+                            float updateVersion = scan();
+
+                            if(currentVersion >= updateVersion) {
+                                Log.d(TAG, "The app is already at the latest version");
+                            } else {
+                                download("http://liveupdates.argyletechnologygroup.com/redinc/REDAR.apk", "REDAR.apk");
+                            }
+
+                        }
+
+                    }
                 }
             }
         };
+        
         registerReceiver(downloadCompleteReceiver, downloadCompleteIntentFilter);
 
         launchBtn = (Button) findViewById(R.id.Launch);
         launchBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                launch(v);
+                //launch(v);
             }
         });
     }
@@ -128,14 +127,11 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch(item.getItemId()) {
-            case R.id.updateLauncher:
-                Log.d(TAG, "The service to update the launcher was started");
-                PushLink.start(this, R.drawable.ic_launcher_hdpi, apiKey, deviceId);
-                return true;
 
             case R.id.updateRedar:
                 Log.d(TAG, "The service to update REDAR was started");
-                download();
+                delete(apploc, updtloc);
+                download("Insert link to txt file here", "version.txt");
                 return true;
 
             default:
@@ -143,96 +139,80 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    public void launch(View view) {
+    public void launch() {
         Log.d(TAG, "Launching package");
         Intent launchIntent = getPackageManager().getLaunchIntentForPackage(APP_PACKAGE);
         startActivity(launchIntent);
     }
 
-    public void download() {
-        //Deletes files from the Download directory before downloading the updates
-        File file1 = new File(ziploc);
-        File file2 = new File(apploc);
-        if(file1.exists()) {
-            Log.d(TAG, "Zip file found, deleting... ");
-            file1.delete();
-        } else {
-            Log.d(TAG, "Zip file not found, skipping... ");
-        }
-
-        if(file2.exists()) {
-            Log.d(TAG, "Apk found, deleting... ");
-            file2.delete();
-        } else {
-            Log.d(TAG, "Apk not found, skipping... ");
-        }
-
+    public void download(String link, String filename) {
         //Perform the required downloads for the update
         DownloadManager.Request request = new DownloadManager.Request(Uri.parse(link));
         request.setDescription("I am downloading the update").setTitle("Downloading update");
-        request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, "app.zip");
+        request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, filename);
         request.setVisibleInDownloadsUi(true);
         manager = (DownloadManager) getSystemService(Context.DOWNLOAD_SERVICE);
         myDownloadReference = manager.enqueue(request);
 
     }
 
-    public void install() {
+    public void install(String filename) {
         //Installs the application
         Log.d(TAG, "Install application");
-        unpackZip("/sdcard/Download/", "app.zip");
         Intent promptInstall = new Intent(Intent.ACTION_VIEW);
-        promptInstall.setDataAndType(Uri.fromFile(new File(Environment.getExternalStorageDirectory() + "/Download/" + appname)), "application/vnd.android.package-archive");
+        promptInstall.setDataAndType(Uri.fromFile(new File(Environment.getExternalStorageDirectory() + "/Download/" + filename)), "application/vnd.android.package-archive");
         promptInstall.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         startActivity(promptInstall);
     }
 
-    private boolean unpackZip(String path, String zipname)
-    {
-        InputStream is;
-        ZipInputStream zis;
-        try
-        {
-            String filename;
-            Log.d(TAG, "File path: " + path + zipname);
-            is = new FileInputStream(path + zipname);
-            zis = new ZipInputStream(new BufferedInputStream(is));
-            ZipEntry ze;
-            byte[] buffer = new byte[1024];
-            int count;
+    public void delete(String appLocation, String versionLocation) {
+        File file1 = new File(versionLocation);
+        File file2 = new File(appLocation);
 
-            while ((ze = zis.getNextEntry()) != null)
-            {
-                filename = ze.getName();
-
-                if (ze.isDirectory()) {
-                    File fmd = new File(path + filename);
-                    fmd.mkdirs();
-                    continue;
-                }
-
-                FileOutputStream fout = new FileOutputStream(path + filename);
-
-                while ((count = zis.read(buffer)) != -1)
-                {
-                    fout.write(buffer, 0, count);
-                }
-
-                fout.close();
-                zis.closeEntry();
-            }
-
-            zis.close();
-
-        } catch (IOException e) {
-
-            e.printStackTrace();
-            return false;
-
+        if(file1.exists()) {
+            Log.d(TAG, "Old update file found, deleting... ");
+            file1.delete();
+        } else {
+            Log.d(TAG, "Old update not found, skipping... ");
         }
 
-        return true;
-
+        if(file2.exists()) {
+            Log.d(TAG, "Old apk found, deleting... ");
+            file2.delete();
+        } else {
+            Log.d(TAG, "Old apk not found, skipping... ");
+        }
     }
 
+    public float getApplicationVersion() {
+        String packageToCheck = APP_PACKAGE;
+
+        List<PackageInfo> packages = getPackageManager().getInstalledPackages(0);
+        for (int i = 0; i < packages.size(); i++) {
+            PackageInfo p = packages.get(i);
+            if (p.packageName.contains(packageToCheck)) {
+                String versionName = p.versionName;
+                float versionNumber = Float.parseFloat(versionName);
+                return versionNumber;
+            }
+        }
+        return 0;
+    }
+
+    public float scan() {
+        File scanFile = new File("/sdcard/Download", "test.txt");
+        try {
+            Scanner fileScanner = new Scanner(scanFile);
+            float i = fileScanner.nextFloat();
+            return i;
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
+
+    protected void onDestroy() {
+        super.onDestroy();
+        unregisterReceiver(downloadCompleteReceiver);
+    }
 }

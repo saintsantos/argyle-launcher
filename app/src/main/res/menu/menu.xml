@@ -1,14 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:compat="http://schemas.android.com/apk/res-auto">
-    <item
-        android:id="@+id/updateLauncher"
-        android:title="Check for updates for launcher"
-        compat:showAsAction="never" />
 
     <item
         android:id="@+id/updateRedar"
-        android:title="Check for updates for REDAR"
+        android:title="Check for update"
         compat:showAsAction="never" />
 
 </menu>
