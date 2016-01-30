@@ -42,7 +42,11 @@ public class MainActivity extends AppCompatActivity {
     private String updtloc = Environment.getExternalStorageDirectory() + "/Download/version.txt";
     private String apploc = Environment.getExternalStorageDirectory() + "/Download/REDAR.apk";
 
+    private String versionLink = "http://liveupdates.argyletechnologygroup.com/redar/version.txt";
+    private String appLink = "http://liveupdates.argyletechnologygroup.com/redar/REDAR.apk";
+
     private String appname = "REDAR.apk";
+   // private String currentVersion = getApplicationVersion();
 
     private BroadcastReceiver downloadCompleteReceiver;
 
@@ -53,7 +57,16 @@ public class MainActivity extends AppCompatActivity {
         View decorView = getWindow().getDecorView();
         int  uiOptions = View.SYSTEM_UI_FLAG_FULLSCREEN;
         decorView.setSystemUiVisibility(uiOptions);
-        //launch();
+
+        //Check if the app is installed initially
+        final String currentVersion = getApplicationVersion();
+        Log.d(TAG, "The current version is: " + currentVersion);
+       if (currentVersion != "") {
+           Log.d(TAG, "launch app");
+            //launch();
+        } else {
+            Toast.makeText(getApplicationContext(), "App not installed, please run updater", Toast.LENGTH_SHORT).show();
+        }
 
 
 
@@ -85,7 +98,6 @@ public class MainActivity extends AppCompatActivity {
                     Log.d(TAG, "Download Complete!");
                     File versionFile = new File(updtloc);
                     File appFile = new File(apploc);
-                    float currentVersion = getApplicationVersion();
 
                     if(appFile.exists()) {
                         Log.d(TAG, "Install the app");
@@ -94,18 +106,18 @@ public class MainActivity extends AppCompatActivity {
 
                         if(versionFile.exists()) {
 
-                            //float currentVersion = getApplicationVersion();
-                            float updateVersion = scan();
+                            String currentVersion = getApplicationVersion();
+                            String updateVersion = scan();
                             Log.d(TAG, "Current Version: " + currentVersion);
                             Log.d(TAG, "Update Verison: " + updateVersion);
 
-                            if(currentVersion >= updateVersion) {
+                            if(currentVersion.equals(updateVersion)) {
                                 Log.d(TAG, "The app is already at the latest version");
                                 Toast.makeText(getApplicationContext(), "Application already at latest version", Toast.LENGTH_SHORT).show();
                             } else {
                                 Log.d(TAG, "Downloading the apk installer");
                                 Toast.makeText(getApplicationContext(), "New update, please wait for download to finish", Toast.LENGTH_SHORT).show();
-                                download("http://liveupdates.argyletechnologygroup.com/redinc/REDAR.apk", "REDAR.apk");
+                                download(appLink, "REDAR.apk");
                             }
 
                         }
@@ -121,7 +133,14 @@ public class MainActivity extends AppCompatActivity {
         launchBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                //launch(v);
+                String currentVersion = getApplicationVersion();
+                Log.d(TAG, "The current version is: " + currentVersion);
+                if (!currentVersion.equals("") ) {
+                    Log.d(TAG, "launch app");
+                    launch();
+                } else {
+                    Toast.makeText(getApplicationContext(), "App not installed, please run updater", Toast.LENGTH_SHORT).show();
+                }
             }
         });
     }
@@ -140,7 +159,7 @@ public class MainActivity extends AppCompatActivity {
             case R.id.updateRedar:
                 Log.d(TAG, "The service to update REDAR was started");
                 delete(apploc, updtloc);
-                download("https://www.dropbox.com/s/aaawhck7jgkrm7q/version.txt?dl=1", "version.txt");
+                download(versionLink, "version.txt");
                 return true;
 
             default:
@@ -193,7 +212,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    public float getApplicationVersion() {
+    public String getApplicationVersion() {
         String packageToCheck = APP_PACKAGE;
 
         List<PackageInfo> packages = getPackageManager().getInstalledPackages(0);
@@ -201,23 +220,22 @@ public class MainActivity extends AppCompatActivity {
             PackageInfo p = packages.get(i);
             if (p.packageName.contains(packageToCheck)) {
                 String versionName = p.versionName;
-                float versionNumber = Float.parseFloat(versionName);
-                return versionNumber;
+                return versionName;
             }
         }
-        return 0;
+        return "";
     }
 
-    public float scan() {
+    public String scan() {
         File scanFile = new File("/sdcard/Download", "version.txt");
         try {
             Scanner fileScanner = new Scanner(scanFile);
-            float i = fileScanner.nextFloat();
-            return i;
+            String line = fileScanner.nextLine();
+            return line;
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
-        return 0;
+        return "";
     }
 
 
